@@ -2,28 +2,29 @@
 
 if [ ! $1 ]; then
   echo "Going to need something to watch..."
-  echo "Usage : $0 [FQDN]"
+  echo "Usage : $0 [FQDN] [TIMER]"
   exit
 fi
 
 fqdn=$(echo $1)
+timer=5
+serversFile=servers.txt
 
-servers="8.8.8.8 4.2.2.1 1.1.1.1"
+if [ $2 ]; then
+  timer=$(echo $2)
+fi
+
+serversDNS=$(cat ${serversFile}|cut -d':' -f1)
+serversTxt=$(cat ${serversFile}|cut -d':' -f2)
 
 while [ 1 -ne 2 ]; do
   loop=0
-  for server in ${servers}; do
+  echo "Digging results : ${fqdn}"
+  for server in ${serversDNS}; do
     output=$(dig @${server} +short ${fqdn})
-    if [ ${loop} -eq 0 ]; then
-      echo "Google : ${output}"
-    fi
-    if [ ${loop} -eq 1 ]; then
-      echo "Verizon: ${output}"
-    fi
-    if [ ${loop} -eq 2 ]; then
-      echo "CloudFlare: ${output}"
-    fi
     loop=$(expr ${loop} + 1)
+    dnsoutput=$(echo ${serversTxt}|cut -d' ' -f${loop})
+    echo "[${dnsoutput}]	${output}"
   done
-  sleep 5 && clear
+  sleep ${timer} && clear
 done
